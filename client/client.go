@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"dns-exfiltration-client/parser"
+	"fmt"
+)
 
 func main() {
-	fmt.Println("Starting client...")
+	args := parser.ParseArgs()
+	fmt.Println(args.Filename)
 }

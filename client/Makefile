@@ -1,5 +1,3 @@
-default: compile run
+default: compile
 compile:
 	go build
-run:
-	./dns-exfiltration-client
