@@ -29,7 +29,10 @@ func main() {
 		os.Exit(0)
 	}()
 
-	udpServer, err := net.ListenPacket("udp", ":53")
+	udpAddr := net.UDPAddr{
+		Port: 53,
+	}
+	udpServer, err := net.ListenUDP("udp", &udpAddr)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -37,13 +40,28 @@ func main() {
 
 	buf := make([]byte, MAX_UDP_PACKET_SIZE)
 	for {
-		_, _, err := udpServer.ReadFrom(buf)
+		_, clientAddr, err := udpServer.ReadFromUDP(buf)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
 		var request dns.Msg
 		request.Unpack(buf)
-		fmt.Println(request.Question[0].Name)
+		name := request.Question[0].Name
+		fmt.Println(name)
+
+		var reply dns.Msg
+		reply.SetReply(&request)
+		rr, err := dns.NewRR(fmt.Sprintf("%s A 8.8.8.8", name))
+		if err != nil {
+			log.Fatalln(err)
+		}
+		reply.Answer = append(reply.Answer, rr)
+
+		response, err := reply.Pack()
+		if err != nil {
+			log.Fatalln(err)
+		}
+		udpServer.WriteToUDP(response, clientAddr)
 	}
 }
