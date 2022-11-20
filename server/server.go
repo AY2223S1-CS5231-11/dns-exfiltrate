@@ -7,6 +7,15 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/miekg/dns"
+)
+
+const (
+	// Messages carried by UDP are restricted to 512 bytes (not counting the IP
+	// or UDP headers).
+	// - https://www.rfc-editor.org/rfc/rfc1035#section-4.2.1
+	MAX_UDP_PACKET_SIZE = 512
 )
 
 func main() {
@@ -26,13 +35,15 @@ func main() {
 	}
 	defer udpServer.Close()
 
-	buf := make([]byte, 1024)
+	buf := make([]byte, MAX_UDP_PACKET_SIZE)
 	for {
 		_, _, err := udpServer.ReadFrom(buf)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		fmt.Println(buf)
+		var request dns.Msg
+		request.Unpack(buf)
+		fmt.Println(request.Question[0].Name)
 	}
 }
