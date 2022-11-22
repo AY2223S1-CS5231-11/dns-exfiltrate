@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -16,6 +17,7 @@ const (
 	// or UDP headers).
 	// - https://www.rfc-editor.org/rfc/rfc1035#section-4.2.1
 	MAX_UDP_PACKET_SIZE = 512
+	EXFILTRATION_DIR    = "./exfiltrated-data"
 )
 
 func main() {
@@ -38,7 +40,19 @@ func main() {
 	}
 	defer udpServer.Close()
 
+	createDirIfNotExists(EXFILTRATION_DIR)
+
 	handleDnsRequests(udpServer)
+}
+
+func createDirIfNotExists(path string) {
+	_, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		err = os.Mkdir(path, 0644)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
 }
 
 func handleDnsRequests(udpServer *net.UDPConn) {
