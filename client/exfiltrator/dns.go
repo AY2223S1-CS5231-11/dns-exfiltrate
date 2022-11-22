@@ -25,8 +25,12 @@ type dnsExfiltrator struct {
 }
 
 func NewDnsExfiltrator(nameServer string) *dnsExfiltrator {
+	absoluteNameServer := nameServer
+	if nameServer[len(nameServer)-1] != '.' {
+		absoluteNameServer += "."
+	}
 	return &dnsExfiltrator{
-		NameServer: nameServer,
+		NameServer: absoluteNameServer,
 	}
 }
 
