@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 )
 
@@ -33,6 +34,30 @@ func main() {
 	}
 	defer udpServer.Close()
 
+	// We can drop privileges after binding to port 53, which is protected.
+	dropPrivileges()
+
 	dnsExfiltrator := exfiltrator.NewDnsExfiltrator(args.NameServer)
 	dnsExfiltrator.HandleDnsRequests(udpServer, args.NameServer)
+}
+
+func dropPrivileges() {
+	if os.Geteuid() != 0 {
+		return
+	}
+
+	// GID needs to be set before we lose privileges when setting UID.
+	originalGidEnvVar := os.Getenv("SUDO_GID")
+	originalGid, err := strconv.Atoi(originalGidEnvVar)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	syscall.Setgid(originalGid)
+
+	originalUidEnvVar := os.Getenv("SUDO_UID")
+	originalUid, err := strconv.Atoi(originalUidEnvVar)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	syscall.Setuid(originalUid)
 }
