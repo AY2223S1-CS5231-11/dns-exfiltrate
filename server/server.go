@@ -1,12 +1,14 @@
 package main
 
 import (
+	"dns-exfiltration-server/parser"
 	"errors"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/miekg/dns"
@@ -21,6 +23,8 @@ const (
 )
 
 func main() {
+	args := parser.ParseArgs()
+
 	fmt.Println("Starting server...")
 
 	c := make(chan os.Signal, 1)
@@ -42,7 +46,7 @@ func main() {
 
 	createDirIfNotExists(EXFILTRATION_DIR)
 
-	handleDnsRequests(udpServer)
+	handleDnsRequests(udpServer, args.NameServer)
 }
 
 func createDirIfNotExists(path string) {
@@ -55,7 +59,7 @@ func createDirIfNotExists(path string) {
 	}
 }
 
-func handleDnsRequests(udpServer *net.UDPConn) {
+func handleDnsRequests(udpServer *net.UDPConn, nameServer string) {
 	buf := make([]byte, MAX_UDP_PACKET_SIZE)
 	for {
 		_, clientAddr, err := udpServer.ReadFromUDP(buf)
@@ -66,7 +70,9 @@ func handleDnsRequests(udpServer *net.UDPConn) {
 		var request dns.Msg
 		request.Unpack(buf)
 		name := request.Question[0].Name
-		fmt.Println(name)
+		subdomains := strings.Split(name, nameServer)[0]
+		data := strings.ReplaceAll(subdomains, ".", "")
+		fmt.Println(data)
 
 		var reply dns.Msg
 		reply.SetReply(&request)

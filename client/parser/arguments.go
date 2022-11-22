@@ -22,6 +22,7 @@ func ParseArgs() *Arguments {
 	if err != nil {
 		// If there is a parse error, print usage.
 		fmt.Print(parser.Usage(err))
+		os.Exit(0)
 	}
 
 	return &Arguments{
