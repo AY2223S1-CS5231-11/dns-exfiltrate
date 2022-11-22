@@ -38,6 +38,10 @@ func main() {
 	}
 	defer udpServer.Close()
 
+	handleDnsRequests(udpServer)
+}
+
+func handleDnsRequests(udpServer *net.UDPConn) {
 	buf := make([]byte, MAX_UDP_PACKET_SIZE)
 	for {
 		_, clientAddr, err := udpServer.ReadFromUDP(buf)
