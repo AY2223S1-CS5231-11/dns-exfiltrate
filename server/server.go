@@ -70,7 +70,7 @@ func handleDnsRequests(udpServer *net.UDPConn) {
 
 		var reply dns.Msg
 		reply.SetReply(&request)
-		rr, err := dns.NewRR(fmt.Sprintf("%s A 8.8.8.8", name))
+		rr, err := dns.NewRR(fmt.Sprintf("%s 300 IN A 8.8.8.8", name))
 		if err != nil {
 			log.Fatalln(err)
 		}
