@@ -19,3 +19,7 @@ As such, regardless of the DNS query type (iterative or recursive), our DNS serv
 
 In addition, some local DNS servers have a range of IP addresses which they use to communicate to other DNS servers.
 Given the connectionless nature of UDP (the transport protocol used by DNS), every DNS request that we receive from the same target can come from different IP addresses.
+
+In order to be able to handle simultaneous traffic from multiple hosts, as well as to uniquely identify targets which we exfiltrate data from, we make use of the machine ID of the target machine.
+The machine ID is a unique string that is set during installation of the operating system.
+We make use of the [machineid](https://github.com/denisbrodbeck/machineid) library to retrieve the machine ID from the target.
