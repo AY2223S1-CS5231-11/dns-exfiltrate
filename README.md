@@ -54,3 +54,12 @@ Given the connectionless nature of UDP (the transport protocol used by DNS), eve
 In order to be able to handle simultaneous traffic from multiple hosts, as well as to uniquely identify targets which we exfiltrate data from, we make use of the machine ID of the target machine.
 The machine ID is a unique string that is set during installation of the operating system.
 We make use of the [machineid](https://github.com/denisbrodbeck/machineid) library to retrieve the machine ID from the target.
+
+## Limitations
+
+### DNS Caching
+
+The DNS responses sent by the server have a Time-To-Live (TTL) of 300 seconds.
+This is because setting it any lower might result in some DNS resolvers to ignore its value.
+As a result, trying to exfiltrate the same file will not work until some time has passed (likely 5 minutes if the TTL is respected, possibly longer).
+This is not a big issue as long as the exfiltration does not fail halfway through as we are unlikely to need to exfiltrate a recently exfiltrated file.
