@@ -99,6 +99,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 			if err != nil {
 				log.Fatalln(err)
 			}
+			ex.unprocessedData[machineId] = make([]byte, 0)
 		case DNS_FILE_DATA.String():
 			ex.unprocessedData[machineId] = append(ex.unprocessedData[machineId], data...)
 		default:
