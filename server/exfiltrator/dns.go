@@ -3,6 +3,7 @@ package exfiltrator
 import (
 	"dns-exfiltration-server/fileutils"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -68,10 +69,18 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 		request.Unpack(buf)
 		name := request.Question[0].Name
 		subdomains := strings.Split(name, nameServer)[0]
-		msgType, machineId, msg := func() (string, string, string) {
+		msgType, machineId, msg, err := func() (string, string, string, error) {
 			x := strings.SplitN(subdomains, ".", 3)
-			return x[0], x[1], x[2]
+			if len(x) != 3 {
+				errorMsg := fmt.Sprintf("Received malformed DNS request: %s", name)
+				return "", "", "", errors.New(errorMsg)
+			}
+			return x[0], x[1], x[2], nil
 		}()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
 		data := strings.ReplaceAll(msg, ".", "")
 
 		clientDir := path.Join(EXFILTRATION_DIR, machineId)
