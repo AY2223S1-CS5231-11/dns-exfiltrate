@@ -125,6 +125,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 				log.Fatalln(err)
 			}
 			ex.unprocessedData[machineId] = make([]byte, 0)
+			log.Println("Successfully exfiltrated file:", filename)
 		case DNS_FILE_DATA.String():
 			ex.unprocessedData[machineId] = append(ex.unprocessedData[machineId], data...)
 		default:
