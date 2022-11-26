@@ -107,9 +107,13 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 				continue
 			}
 			file := ex.openFiles[machineId][filename]
+			if file == nil {
+				log.Println("Received a DNS_FILE_END message without a corresponding DNS_FILE_START message for file:", filename)
+				continue
+			}
 			decodedData, err := decodeFromModifiedBase64(string(ex.unprocessedData[machineId]))
 			if err != nil {
-				log.Println("Unable to decode data for file: ", filename)
+				log.Println("Unable to decode data for file:", filename)
 				continue
 			}
 			_, err = file.Write(decodedData)
