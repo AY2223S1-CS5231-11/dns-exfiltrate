@@ -71,7 +71,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 		subdomains := strings.Split(name, nameServer)[0]
 		msgType, machineId, msg, err := func() (string, string, string, error) {
 			x := strings.SplitN(subdomains, ".", 3)
-			if len(x) != 3 {
+			if len(x) != 3 || len(x[2]) == 0 {
 				errorMsg := fmt.Sprintf("Received malformed DNS request: %s", name)
 				return "", "", "", errors.New(errorMsg)
 			}
