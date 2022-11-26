@@ -63,3 +63,11 @@ The DNS responses sent by the server have a Time-To-Live (TTL) of 300 seconds.
 This is because setting it any lower might result in some DNS resolvers to ignore its value.
 As a result, trying to exfiltrate the same file will not work until some time has passed (likely 5 minutes if the TTL is respected, possibly longer).
 This is not a big issue as long as the exfiltration does not fail halfway through as we are unlikely to need to exfiltrate a recently exfiltrated file.
+
+## Possible Improvements
+
+### Sending Concurrent DNS Requests
+
+Currently, the client will wait for a response from the server before sending the next DNS request.
+Exfiltration of data can be sped up if we were to allow for concurrent DNS requests to be sent even though their respective responses have yet to be received.
+However, this would necessitate the implementation of a protocol to handle out-of-order packet delivery, which would complicate this proof-of-concept.
