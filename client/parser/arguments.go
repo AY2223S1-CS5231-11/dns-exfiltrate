@@ -10,6 +10,7 @@ import (
 type Arguments struct {
 	NameServer string
 	Filename   string
+	Delay      int
 }
 
 func ParseArgs() *Arguments {
@@ -17,6 +18,7 @@ func ParseArgs() *Arguments {
 
 	nameServer := parser.String("n", "nameserver", &argparse.Options{Required: true, Help: "Address of the nameserver to exfiltrate to"})
 	filename := parser.String("f", "filename", &argparse.Options{Required: true, Help: "Name of file to exfiltrate"})
+	delay := parser.Int("d", "delay", &argparse.Options{Default: 0, Required: false, Help: "Delay in milliseconds between each DNS request"})
 
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -28,5 +30,6 @@ func ParseArgs() *Arguments {
 	return &Arguments{
 		NameServer: *nameServer,
 		Filename:   *filename,
+		Delay:      *delay,
 	}
 }
