@@ -43,13 +43,12 @@ func NewDnsExfiltrator(nameServer string) *dnsExfiltrator {
 	}
 }
 
-func decodeFromModifiedBase64(modifiedBase64Data string) ([]byte, error) {
-	base64Data := strings.Replace(modifiedBase64Data, "-", "=", -1)
-	return base64.URLEncoding.DecodeString(base64Data)
+func decodeFromBase64(base64Data string) ([]byte, error) {
+	return base64.URLEncoding.WithPadding(base64.NoPadding).DecodeString(base64Data)
 }
 
 func getFilePathFromEncodedFilename(dir string, encodedFilename string) (string, error) {
-	filename, err := decodeFromModifiedBase64(encodedFilename)
+	filename, err := decodeFromBase64(encodedFilename)
 	if err != nil {
 		errorMsg := fmt.Sprintf("Unable to decode filename: %s", encodedFilename)
 		return "", errors.New(errorMsg)
@@ -111,7 +110,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 				log.Println("Received a DNS_FILE_END message without a corresponding DNS_FILE_START message for file:", filename)
 				break
 			}
-			decodedData, err := decodeFromModifiedBase64(string(ex.unprocessedData[machineId]))
+			decodedData, err := decodeFromBase64(string(ex.unprocessedData[machineId]))
 			if err != nil {
 				log.Println("Unable to decode data for file:", filename)
 				ex.unprocessedData[machineId] = make([]byte, 0)

