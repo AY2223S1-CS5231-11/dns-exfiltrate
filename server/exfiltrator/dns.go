@@ -138,6 +138,7 @@ func (ex *dnsExfiltrator) HandleDnsRequests(udpServer *net.UDPConn, nameServer s
 			ex.unprocessedData[machineId] = append(ex.unprocessedData[machineId], data...)
 		default:
 			log.Printf("Unknown message type: '%s'\n", msgType)
+			continue
 		}
 
 		var reply dns.Msg
