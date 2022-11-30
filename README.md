@@ -1,5 +1,9 @@
 # DNS Data Exfiltration
 
+The Domain Name System (DNS) is a hierarchical and distributed naming system that maps human-readable domain names to IP addresses.
+Since DNS traffic is rarely blocked by most organisations that require access to the Internet, the DNS protocol serves as an attractive medium through which data can be exfiltrated.
+This repository contains a proof-of-concept that explores the use of the DNS protocol to exfiltrate data.
+
 ## Setting Up DNS Records
 
 In order for DNS exfiltration to work, we need to set up our own DNS server that is the authoritative nameserver for some domain.
