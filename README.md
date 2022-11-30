@@ -2,7 +2,7 @@
 
 The Domain Name System (DNS) is a hierarchical and distributed naming system that maps human-readable domain names to IP addresses.
 Since DNS traffic is rarely blocked by most organisations that require access to the Internet, the DNS protocol serves as an attractive medium through which data can be exfiltrated.
-This repository contains a proof-of-concept that explores the use of the DNS protocol to exfiltrate data.
+This repository contains a proof-of-concept that explores the use of the DNS protocol to exfiltrate data (one-way).
 
 ## Setting Up DNS Records
 
@@ -50,6 +50,26 @@ Optionally, the delay in milliseconds between DNS requests can be specified via 
 ```
 
 The above example adds a 500ms delay between the sending of each DNS request.
+
+## Running the Standalone DNS Exfiltration Client
+
+To better illustrate how the DNS exfiltration client might work as malware in the absence of two-way communication, we have added a standalone client with the name server and delay hardcoded to `cs5231.ianyong.com` and 200ms respectively.
+This standalone client scans the entire file system for Git repositories, as indicated by the presence of a `.git` directory.
+It then exfiltrates the files inside each of these Git repositories based on the abovementioned hardcoded parameters.
+
+To run the standalone DNS exfiltration client:
+```sh
+make compile-standalone
+./dns-exfiltration-standalone-client
+```
+
+If you want to run the standalone client with different parameters, you can edit the following hardcoded values in `/client/cmd/standalone_client/main.go` and recompile:
+```go
+const (
+	NAME_SERVER = "cs5231.ianyong.com"
+	DELAY       = 200
+)
+```
 
 ## Design Decisions
 
